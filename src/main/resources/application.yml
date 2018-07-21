@@ -1,0 +1,57 @@
+# Server Port
+server.port : 3008
+
+# Profiles
+spring.profiles.active: prod
+
+# Google Vision Service
+google_vision_url : https://vision.googleapis.com/
+
+encryption_key: nokey
+bucket_name: servile-snapshots
+snapshot_dir: successful-tests/
+
+image-analyze:
+  identifiers:
+    - hot
+    - bezeq
+
+case.yellow.dir: /home/ec2-user/case-yellow
+
+# Identifiers Meta Data
+hot_location: Mbps
+hot_identifier: Mbps
+hot_identifier_count: 2
+
+bezeq_Mb_location: Mb/s
+bezeq_Kb_location: Kb/s
+
+ookla_identifier: Mbps
+ookla_identifier_count: 2
+
+imgParsersIdentifiers:
+ hot: hotImageParser
+ ookla: ooklaImageParser
+ bezeq: bezeqImageParser
+
+# Logger
+log.dir: ${case.yellow.dir}/logs
+
+#SQS
+sqs.queue.endpoint: https://sqs.eu-central-1.amazonaws.com
+sqs.analyze_snapshot.queue: cy-analyze-snapshot-queue
+sqs.central.queue: cy-central-queue
+
+credentials_path: /home/ec2-user/case-yellow/resources/a.out
+#credentials_path: /home/dango/Documents/case-yellow/a.out
+#credentials_path: C:\\Users\\Dan\\Documents\\case yellow\\main.exe
+
+logging:
+ level:
+   org.springframework.web: ERROR
+   caseyellow.server.gateway: INFO
+   org.hibernate: INFO
+ pattern:
+   console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] - %-5p %c{1}:%L - [%X{correlation-id}] - %m%n"
+   file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] - %-5p %c{1}:%L - [%X{correlation-id}] - %m%n"
+ file: ${log.dir}/caseyellow-analysis-log
