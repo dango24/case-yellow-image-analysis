@@ -13,7 +13,6 @@ snapshot_dir: successful-tests/
 
 image-analyze:
   identifiers:
-    - hot
     - bezeq
 
 case.yellow.dir: /home/ec2-user/case-yellow
