@@ -35,7 +35,7 @@ public class ImageUtils {
     }
 
    public static File getImgFromResources(String path) throws IOException {
-        InputStream resourceAsStream = UploadFileUtils.class.getResourceAsStream(path);
+        InputStream resourceAsStream = ImageUtils.class.getResourceAsStream(path);
         BufferedImage image = ImageIO.read(resourceAsStream);
         File tmpFile = File.createTempFile("test_", new File(path).getName());
         ImageIO.write(image, "PNG", tmpFile);
@@ -145,19 +145,5 @@ public class ImageUtils {
         }
 
         return tmpFile;
-    }
-
-   public static String convertToMD5(File file)  {
-
-        try (InputStream in = new FileInputStream(file)) {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            md.update(IOUtils.toByteArray(in));
-
-            return DatatypeConverter.printHexBinary(md.digest());
-
-        } catch (IOException | NoSuchAlgorithmException e) {
-            log.error(String.format("Failed to convert to MD5, error: %s", e.getMessage(), e));
-            return "UNKNOWN";
-        }
     }
 }

@@ -53,4 +53,4 @@ logging:
  pattern:
    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] - %-5p %c{1}:%L - [%X{correlation-id}] - %m%n"
    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] - %-5p %c{1}:%L - [%X{correlation-id}] - %m%n"
- file: ${log.dir}/caseyellow-analysis-log
+ file: ${log.dir}/caseyellow-image-analysis-log
