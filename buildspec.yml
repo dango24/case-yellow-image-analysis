@@ -1,0 +1,27 @@
+version: 0.1
+
+phases:
+  install:
+    commands:
+      - echo Nothing to do in the install phase...
+  pre_build:
+    commands:
+      - echo Nothing to do in the pre_build phase...
+  build:
+    commands:
+      - echo Build started on `date`
+      - mvn clean install
+      - echo Build completed on `date`
+  post_build:
+    commands:
+      - echo Archive cy-image-analysis
+      - zip -r cy-image-analysis-archive.zip target/case-yellow-image-analysis.jar appspec.yml scripts/*
+      - echo Uplaod cy-image-analysis-archive to S3
+      - aws s3 cp cy-image-analysis-archive.zip s3://cy-codebuild/cy-image-analysis-build-artifact/
+      - echo Successfully uplaoded cy-image-analysis-archive to S3
+
+artifacts:
+  files:
+    - target/case-yellow-image-analysis.jar
+    - appspec.yml
+    - scripts/*
