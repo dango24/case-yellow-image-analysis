@@ -13,17 +13,22 @@ import com.icarusrises.caseyellowimageanalysis.services.googlevision.services.Oc
 import com.icarusrises.caseyellowimageanalysis.services.storage.StorageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+import static com.icarusrises.caseyellowimageanalysis.commons.FileUtils.adjustSuccessfulDirPath;
 import static com.icarusrises.caseyellowimageanalysis.commons.ImageUtils.createData;
 
 @Slf4j
 @Service
 public class ImageAnalyzerServiceImpl implements ImageAnalyzerService {
+
+    @Value("${snapshot_dir}")
+    private String successfulTestsDir;
 
     private OcrService ocrService;
     private StorageService storageService;
@@ -47,19 +52,19 @@ public class ImageAnalyzerServiceImpl implements ImageAnalyzerService {
         File imageFile = null;
 
         try {
-            imageFile = storageService.getFile(imageDetails.getPath());
+            imageFile = storageService.getFile( adjustSuccessfulDirPath(successfulTestsDir, imageDetails.getPath()) );
             GoogleVisionRequest googleVisionRequest = new GoogleVisionRequest(imageFile.getAbsolutePath());
             Map<String, Object> data = createData(imageDetails.getIdentifier(), googleVisionRequest);
+
             AnalyzedImage analyzedImage = analyzeImage(data);
+            analyzedImage.setPath(imageDetails.getPath());
+            analyzedImage.setMd5(imageDetails.getMd5());
 
-            if (analyzedImage.isAnalyzed()) {
-                analyzedImage.setPath(imageDetails.getPath());
-                analyzedImage.setMd5(imageDetails.getMd5());
-                messageProducerService.send(MessageType.SNAPSHOT_ANALYZED, analyzedImage);
-
-            } else {
-                throw new AnalyzeException(String.format("Failed to analyze image: %s", imageDetails.getPath()));
+            if (!analyzedImage.isAnalyzed()) {
+                log.error(String.format("Failed to analyze image: %s", imageDetails.getPath()));
             }
+
+            messageProducerService.send(MessageType.SNAPSHOT_ANALYZED, analyzedImage);
 
         } catch (Exception e) {
             String errorMessage = String.format("Failed to analyze image: %s, cause: %s", imageDetails.getPath(), e.getMessage());

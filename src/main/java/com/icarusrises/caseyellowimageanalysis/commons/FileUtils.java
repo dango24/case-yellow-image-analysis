@@ -1,5 +1,6 @@
 package com.icarusrises.caseyellowimageanalysis.commons;
 
+import com.sun.javafx.binding.StringFormatter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
@@ -18,6 +19,16 @@ public class FileUtils {
             }
         } catch (IOException e) {
             log.error(String.format("Failed to delete file: %s", e.getMessage()));
+        }
+    }
+
+    public static String adjustSuccessfulDirPath(String snapshotDirPath,  String path) {
+
+        if (path.startsWith(snapshotDirPath)) {
+            return path;
+
+        } else {
+            return snapshotDirPath + path;
         }
     }
 }

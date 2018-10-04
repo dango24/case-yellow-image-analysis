@@ -1,9 +1,12 @@
 package com.icarusrises.caseyellowimageanalysis.queues.services;
 
 import com.amazonaws.services.s3.event.S3EventNotification;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icarusrises.caseyellowimageanalysis.domain.analyzer.image.services.ImageAnalyzerService;
 import com.icarusrises.caseyellowimageanalysis.exceptions.AnalyzeException;
 import com.icarusrises.caseyellowimageanalysis.queues.model.ImageDetails;
+import com.icarusrises.caseyellowimageanalysis.queues.model.MessageType;
+import com.icarusrises.caseyellowimageanalysis.queues.model.QueueMessage;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +20,7 @@ import org.springframework.jms.annotation.JmsListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.util.List;
 
 import static java.util.Objects.nonNull;
@@ -30,42 +34,57 @@ public class ImageAnalysisConsumer {
     @Value("${snapshot_dir}")
     private String snapshotDir;
 
-    @Getter
-    @Setter
+    @Getter @Setter
     private List<String> identifiers;
 
+    private ObjectMapper mapper;
     private ImageAnalyzerService imageAnalyzerService;
 
     @Autowired
     public ImageAnalysisConsumer(ImageAnalyzerService imageAnalyzerService) {
         this.imageAnalyzerService = imageAnalyzerService;
+        this.mapper = new ObjectMapper();
     }
 
-    @JmsListener(destination = "${sqs.analyze_snapshot.queue}")
-    public void processMessage(@Payload S3EventNotification s3EventNotification) {
+    @JmsListener(destination = "${sqs.analyze_snapshot.queue}", containerFactory = "S3EventNotificationContainerFactory")
+    public void processS3EventNotificationMessage(@Payload S3EventNotification s3EventNotification) {
 
         if (isValidNotificationMessage(s3EventNotification)) {
 
             s3EventNotification.getRecords()
-                               .stream()
-                               .filter(this::isValidRecord)
-                               .map(S3EventNotification.S3EventNotificationRecord::getS3)
-                               .map(S3EventNotification.S3Entity::getObject)
-                               .map(S3EventNotification.S3ObjectEntity::getKey)
-                               .map(this::buildImagePathDetails)
-                               .filter(this::isImageQualifiedForAnalyze)
-                               .peek(this::putMDC)
-                               .forEach(this::analyzeImage);
+                    .stream()
+                    .filter(this::isValidRecord)
+                    .map(S3EventNotification.S3EventNotificationRecord::getS3)
+                    .map(S3EventNotification.S3Entity::getObject)
+                    .map(S3EventNotification.S3ObjectEntity::getKey)
+                    .map(this::buildImagePathDetails)
+                    .filter(this::isImageQualifiedForAnalyze)
+                    .peek(this::putMDC)
+                    .forEach(this::analyzeImage);
         }
     }
 
-    private void analyzeImage(ImageDetails imagePathDetails) throws AnalyzeException {
+    @JmsListener(destination = "${sqs.image_analyze.queue}", containerFactory = "imageMessageContainerFactory")
+    public void processImageMessage(@Payload QueueMessage queueMessage) throws IOException {
+
+        if (nonNull(queueMessage) && queueMessage.getMessageType() == MessageType.IMAGE_ANALYSIS) {
+
+            ImageDetails imageDetails = mapper.readValue(queueMessage.getPayload(), ImageDetails.class);
+            putMDC(imageDetails);
+            analyzeImage(imageDetails);
+        }
+    }
+
+    private void analyzeImage(ImageDetails imagePathDetails) {
         log.info(String.format("Start analyzing image for path: %s", imagePathDetails.getPath()));
 
         try {
             imageAnalyzerService.analyzeImage(imagePathDetails);
 
-        } finally {
+        } catch (AnalyzeException e) {
+            handleAnalyzedImageFaliure(imagePathDetails);
+
+        }finally {
             MDC.remove("correlation-id");
         }
     }
@@ -115,5 +134,9 @@ public class ImageAnalysisConsumer {
 
         return identifier.replaceAll(".png", "")
                          .replaceAll(".PNG", "");
+    }
+
+    private void handleAnalyzedImageFaliure(ImageDetails imagePathDetails) {
+
     }
 }

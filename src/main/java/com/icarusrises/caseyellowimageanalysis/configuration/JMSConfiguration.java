@@ -13,7 +13,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
+import com.icarusrises.caseyellowimageanalysis.queues.model.QueueMessage;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -58,8 +60,8 @@ public class JMSConfiguration {
         return connectionFactory;
     }
 
-    @Bean
-    public DefaultJmsListenerContainerFactory jmsListenerContainerFactory(ConnectionFactory connectionFactory, MessageConverter messageConverter) {
+    @Bean(name = "S3EventNotificationContainerFactory")
+    public DefaultJmsListenerContainerFactory jmsListenerS3EventContainerFactory(ConnectionFactory connectionFactory, @Qualifier("S3EventNotificationConverter") MessageConverter messageConverter) {
         DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
         factory.setDestinationResolver(new DynamicDestinationResolver());
@@ -70,15 +72,8 @@ public class JMSConfiguration {
         return factory;
     }
 
-    @Bean
-    public JmsTemplate jmsTemplate(ConnectionFactory connectionFactory, MessageConverter messageConverter) {
-        JmsTemplate jmsTemplate = new JmsTemplate(connectionFactory);
-        jmsTemplate.setMessageConverter(messageConverter);
-        return jmsTemplate;
-    }
-
-    @Bean
-    public MessageConverter messageConverter() {
+    @Bean(name = "S3EventNotificationConverter")
+    public MessageConverter S3EventMessageConverter() {
         Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
         builder.serializationInclusion(JsonInclude.Include.NON_EMPTY);
         builder.dateFormat(new ISO8601DateFormat());
@@ -88,6 +83,38 @@ public class JMSConfiguration {
             @Override
             protected JavaType getJavaTypeForMessage(Message message) throws JMSException {
                 return TypeFactory.defaultInstance().constructType(S3EventNotification.class);
+            }
+        };
+
+        mappingJackson2MessageConverter.setObjectMapper(builder.build());
+        mappingJackson2MessageConverter.setTargetType(MessageType.TEXT);
+
+        return mappingJackson2MessageConverter;
+    }
+
+    @Bean(name = "imageMessageContainerFactory")
+    public DefaultJmsListenerContainerFactory jmsListenerContainerFactory(ConnectionFactory connectionFactory, @Qualifier("imageMessageConverter") MessageConverter messageConverter) {
+        DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        factory.setDestinationResolver(new DynamicDestinationResolver());
+        factory.setConcurrency("8");
+        factory.setSessionAcknowledgeMode(Session.CLIENT_ACKNOWLEDGE);
+        factory.setMessageConverter(messageConverter);
+
+        return factory;
+    }
+
+    @Bean(name = "imageMessageConverter")
+    public MessageConverter imageMessageConverter() {
+        Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
+        builder.serializationInclusion(JsonInclude.Include.NON_EMPTY);
+        builder.dateFormat(new ISO8601DateFormat());
+
+        MappingJackson2MessageConverter mappingJackson2MessageConverter = new MappingJackson2MessageConverter() {
+
+            @Override
+            protected JavaType getJavaTypeForMessage(Message message) throws JMSException {
+                return TypeFactory.defaultInstance().constructType(QueueMessage.class);
             }
         };
 
