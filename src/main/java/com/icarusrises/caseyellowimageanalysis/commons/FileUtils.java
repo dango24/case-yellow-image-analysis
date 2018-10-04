@@ -1,6 +1,5 @@
 package com.icarusrises.caseyellowimageanalysis.commons;
 
-import com.sun.javafx.binding.StringFormatter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
