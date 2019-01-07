@@ -65,7 +65,7 @@ public class HotImageParser extends ImageTestParser {
                              .collect(Collectors.toList());
 
             if (hotIdentifiers.size() != hotIdentifierCount) {
-                handleCountMisMatch(data, hotIdentifiers.size());
+                throw new IllegalArgumentException(String.format("The number of found identifiers is not match for identifier: %s  expected: %s , actual: %s", data.get("identifier"), hotIdentifierCount, hotIdentifiers.size()));
             }
 
             PinnedWord leftPinnedWord = retrievePinnedWord(hotIdentifiers.get(0), hotIdentifiers.get(1), (leftX, rightX) -> leftX > rightX);

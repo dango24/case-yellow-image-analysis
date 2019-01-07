@@ -53,7 +53,7 @@ public class BezeqImageParser extends ImageTestParser {
                             .collect(groupingBy(WordData::getDescription));
 
             if (bezeqIdentifiers.size() != 2) {
-                return handleCountMisMatch(data, bezeqIdentifiers.size());
+                throw new IllegalArgumentException(String.format("The number of found identifiers is not match for identifier: %s  expected: %s , actual: %s", data.get("identifier"), 2, bezeqIdentifiers.size()));
             }
 
             validateResults(bezeqIdentifiers);
