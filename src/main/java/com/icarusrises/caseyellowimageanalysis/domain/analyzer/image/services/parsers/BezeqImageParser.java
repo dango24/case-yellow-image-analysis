@@ -104,7 +104,8 @@ public class BezeqImageParser extends ImageTestParser {
         PinnedWord kbPinnedWord = createPinnedWord(bezeqIdentifiers.get(bezeqKbLocation).get(0));
         PinnedWord mbPinnedWord = createPinnedWord(bezeqIdentifiers.get(bezeqMbLocation).get(0));
 
-        if (kbPinnedWord.getCentralizedLocation().getX() > mbPinnedWord.getCentralizedLocation().getX()) {
+        if (!((kbPinnedWord.getCentralizedLocation().getX() < mbPinnedWord.getCentralizedLocation().getX()) ||
+             (kbPinnedWord.getCentralizedLocation().getY() > mbPinnedWord.getCentralizedLocation().getY())) ) {
             throw new SpeedTestParserException("Failed to parse image, the Kb point is from the right of the Mb point.");
         }
     }
