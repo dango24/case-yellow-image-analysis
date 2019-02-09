@@ -13,6 +13,6 @@ public class ImageAnalysisController {
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/health")
     public Payload health() {
-        return new Payload("Show me how to live");
+        return new Payload("Show me how to live just one more time");
     }
 }
