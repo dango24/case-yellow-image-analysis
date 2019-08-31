@@ -24,7 +24,7 @@ public class ImageContext {
 
     public static ImageContext createImageContextDefaultValues() {
         ImageContext imageContext = new ImageContext();
-        imageContext.addLanguage(HEBREW);
+//        imageContext.addLanguage(HEBREW);
         imageContext.addLanguage(ENGLISH);
 
         return imageContext;
