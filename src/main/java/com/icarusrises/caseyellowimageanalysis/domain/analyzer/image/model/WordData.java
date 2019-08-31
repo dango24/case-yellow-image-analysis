@@ -72,4 +72,13 @@ public class WordData {
     public int hashCode() {
         return description != null ? description.hashCode() : 0;
     }
+
+    @Override
+    public String toString() {
+        return com.google.common.base.MoreObjects.toStringHelper(this)
+                .add("index", index)
+                .add("description", description)
+                .add("boundingPoly", boundingPoly)
+                .toString();
+    }
 }
